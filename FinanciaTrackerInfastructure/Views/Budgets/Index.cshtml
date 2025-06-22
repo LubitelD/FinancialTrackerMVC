@@ -1,0 +1,137 @@
+﻿@model IEnumerable<FinancialTrackerDomain.Model.Budget>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Budgets</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<div id="budgetGraph" style="width: 900px; height: 500px"></div>
+@section Scripts
+{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            fetch('/api/charts/budgetGraph')
+                .then(response => response.json())
+                .then(jsonData => {
+                    const dataArray = [['Дата', 'Сума']];
+                    jsonData.forEach(item => {
+                        const date = new Date(item.date);
+                        dataArray.push([date, item.total]);
+                    });
+
+                    const data = google.visualization.arrayToDataTable(dataArray);
+
+                    const options = {
+                        title: 'Зміна бюджету з часом',
+                        // ── РОБОЧА ЛІНІЯ ──────────────────────────────────────────
+                        curveType: 'function',       // плавна крива
+                        lineWidth: 4,                // товщина лінії
+                        pointSize: 6,                // розмір точок на лінії
+                        colors: ['#4285F4'],         // масив кольорів для series[0], series[1] тощо
+                        series: {
+                            0: { color: '#9370DB', visibleInLegend: true }  // можна задати індивідуально
+                        },
+
+                        // ── ФОН І ПОЛЯ ГРАФІКА ───────────────────────────────────
+                        backgroundColor: '#f9f9f9',  // колір всього canvas
+                        chartArea: {                 // відступи всередині canvas
+                            left: 60,
+                            top: 50,
+                            width: '80%',
+                            height: '70%'
+                        },
+
+                        // ── ОСІ ──────────────────────────────────────────────────
+                        hAxis: {
+                            title: 'Дата',
+                            format: 'yyyy-MM-dd',
+                            textStyle: { fontSize: 12, color: '#666' },
+                            titleTextStyle: { fontSize: 14, bold: true },
+                            gridlines: { color: '#eaeaea', count: 5 }
+                        },
+                        vAxis: {
+                            title: 'Сума',
+                            minValue: 0,
+                            textStyle: { fontSize: 12, color: '#666' },
+                            titleTextStyle: { fontSize: 14, bold: true },
+                            gridlines: { color: '#eaeaea' }
+                        },
+
+                        // ── ЛЕГЕНДА ТА ТЕКСТ ────────────────────────────────────
+                        legend: {
+                            position: 'bottom',
+                            textStyle: { fontSize: 13, color: '#333' }
+                        },
+                        titleTextStyle: {
+                            fontSize: 18,
+                            bold: true,
+                            color: '#333'
+                        },
+
+                        // ── ДОПОМІЖНІ НАЛАШТУВАННЯ ───────────────────────────────
+                        tooltip: { isHtml: true, textStyle: { fontSize: 12 } },
+                        enableInteractivity: true
+                    };
+
+                    const chart = new google.visualization.LineChart(document.getElementById('budgetGraph'));
+                    chart.draw(data, options);
+                });
+        }
+    </script>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LimitAmount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EndDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.EmailAddress)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LimitAmount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EndDate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
